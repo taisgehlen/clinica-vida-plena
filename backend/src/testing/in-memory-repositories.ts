@@ -9,6 +9,9 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
   items: Appointment[] = [];
   private nextId = 1;
 
+  async findAll() {
+    return this.items;
+  }
   async findById(id: string) {
     return this.items.find((a) => a.id === id) ?? null;
   }

@@ -24,6 +24,11 @@ function toAppointment(doc: any): Appointment {
 }
 
 export class MongoAppointmentRepository implements AppointmentRepository {
+  async findAll(): Promise<Appointment[]> {
+    const docs = await AppointmentModel.find().lean();
+    return docs.map(toAppointment);
+  }
+
   async findById(id: string): Promise<Appointment | null> {
     // An id that is not a valid ObjectId can never exist; checking first also
     // avoids passing arbitrary input to the database

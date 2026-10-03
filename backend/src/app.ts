@@ -7,6 +7,7 @@ import { appointmentRoutes } from './modules/appointments/appointment.routes.js'
 import { AppointmentService } from './modules/appointments/appointment.service.js';
 import type { AppointmentRepository } from './modules/appointments/appointment.types.js';
 import { doctorRoutes } from './modules/doctors/doctor.routes.js';
+import { indicatorRoutes } from './modules/indicators/indicators.routes.js';
 import type { DoctorRepository } from './modules/doctors/doctor.types.js';
 
 // What the app needs from the outside. server.ts passes the MongoDB versions;
@@ -31,6 +32,7 @@ export function createApp(deps: AppDependencies) {
   const appointmentService = new AppointmentService(deps.appointments, deps.doctors, deps.now);
   app.use('/api/appointments', appointmentRoutes(appointmentService));
   app.use('/api/doctors', doctorRoutes(deps.doctors));
+  app.use('/api/indicators', indicatorRoutes(deps.appointments, deps.doctors));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
