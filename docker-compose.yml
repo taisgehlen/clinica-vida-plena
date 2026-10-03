@@ -2,7 +2,7 @@ services:
   mongo:
     image: mongo:7
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -10,6 +10,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      MONGO_URL: mongodb://mongo:27017/clinica
+      DATA_DIR: /data
+      CORS_ORIGIN: http://localhost:5173
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: sh -c "npm run import -- --if-empty && npm start"
+    ports:
+      - "127.0.0.1:3000:3000"
 
 volumes:
   mongo-data:

@@ -1,14 +1,18 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { HttpError } from '../utils/http-error.js';
 
+
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof HttpError) {
     res.status(err.status).json({ error: { code: err.code, message: err.message } });
     return;
   }
-  
   if (err?.type === 'entity.parse.failed') {
     res.status(400).json({ error: { code: 'invalid_json', message: 'Corpo da requisição não é um JSON válido' } });
+    return;
+  }
+  if (err?.type === 'entity.too.large') {
+    res.status(413).json({ error: { code: 'payload_too_large', message: 'Corpo da requisição grande demais' } });
     return;
   }
   console.error(err);
