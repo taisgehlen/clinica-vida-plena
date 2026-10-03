@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createApp } from './app.js';
+import { InMemoryAppointmentRepository, InMemoryDoctorRepository } from './testing/in-memory-repositories.js';
 
-const app = createApp();
+const app = createApp({
+  appointments: new InMemoryAppointmentRepository(),
+  doctors: new InMemoryDoctorRepository([]),
+});
 
 describe('app', () => {
   it('responde ao health check', async () => {
@@ -21,6 +25,8 @@ describe('app', () => {
     const allowed = await request(app).get('/api/health').set('Origin', 'http://localhost:5173');
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
 
+    // The browser only accepts the response if this header equals the calling site's address,
+    // so a request from another site is blocked by the browser itself
     const other = await request(app).get('/api/health').set('Origin', 'http://site-estranho.com');
     expect(other.headers['access-control-allow-origin']).not.toBe('http://site-estranho.com');
     expect(other.headers['access-control-allow-origin']).not.toBe('*');

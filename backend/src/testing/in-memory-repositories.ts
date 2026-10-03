@@ -1,0 +1,53 @@
+// In-memory versions of the repositories, used only by tests.
+// They behave like the MongoDB ones, but keep the data in an array.
+import type { Appointment, AppointmentRepository, NewAppointment } from '../modules/appointments/appointment.types.js';
+import type { Doctor, DoctorRepository } from '../modules/doctors/doctor.types.js';
+
+const isActive = (a: Appointment) => a.status !== 'cancelada_paciente' && a.status !== 'cancelada_clinica';
+
+export class InMemoryAppointmentRepository implements AppointmentRepository {
+  items: Appointment[] = [];
+  private nextId = 1;
+
+  async findById(id: string) {
+    return this.items.find((a) => a.id === id) ?? null;
+  }
+  async findActiveByDoctorAt(doctorId: string, at: Date) {
+    return this.items.find((a) => isActive(a) && a.doctorId === doctorId && a.scheduledAt.getTime() === at.getTime()) ?? null;
+  }
+  async findActiveByPatientAt(patientId: string, at: Date) {
+    return this.items.find((a) => isActive(a) && a.patientId === patientId && a.scheduledAt.getTime() === at.getTime()) ?? null;
+  }
+  async create(data: NewAppointment) {
+    const appointment = { ...data, id: String(this.nextId++) };
+    this.items.push(appointment);
+    return appointment;
+  }
+  async updateStatus(id: string, status: Appointment['status'], cancelledAt: Date | null) {
+    const appointment = this.items.find((a) => a.id === id)!;
+    appointment.status = status;
+    appointment.cancelledAt = cancelledAt;
+    return appointment;
+  }
+}
+
+export class InMemoryDoctorRepository implements DoctorRepository {
+  constructor(private readonly doctors: Doctor[]) {}
+  async findAll() {
+    return this.doctors;
+  }
+  async findById(id: string) {
+    return this.doctors.find((d) => d.id === id) ?? null;
+  }
+}
+
+// Dr. Paulo: Monday and Wednesday 07:00-12:00
+export const drPaulo: Doctor = {
+  id: 'MED01',
+  name: 'Dr. Paulo Mendes',
+  specialty: 'Cardiologia',
+  schedule: [
+    { dia: 'segunda', inicio: '07:00', fim: '12:00' },
+    { dia: 'quarta', inicio: '07:00', fim: '12:00' },
+  ],
+};
