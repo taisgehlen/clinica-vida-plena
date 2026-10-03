@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest"
+    "test": "TZ=America/Sao_Paulo vitest",
+    "import": "TZ=America/Sao_Paulo tsx scripts/import-data.ts"
   },
   "type": "module",
   "keywords": [],
@@ -12,7 +13,11 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "csv-parse": "^7.0.3"
   }
 }
