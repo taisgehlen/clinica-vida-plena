@@ -17,7 +17,7 @@ import type { SkipReason } from './rules/queue.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const CONTACT_HISTORY_DAYS = 7;
-const UPCOMING_DAYS = 60;
+const UPCOMING_DAYS = 14;
 
 type OfferEventType = 'offer_sent' | 'offer_accepted' | 'offer_declined' | 'offer_expired' | 'offer_cancelled';
 

@@ -244,10 +244,10 @@ describe('telas da recepção', () => {
     expect(ana).toMatchObject({ phone: '(49) 9****-0000', needsAttention: true, current: { kind: 'offer', status: 'pendente' } });
   });
 
-  it('a lista de próximas consultas mostra antecedência, risco e confirmação, com filtros', async () => {
+  it('a lista mostra os próximos 14 dias com antecedência, risco e confirmação, com filtros', async () => {
     await tick();
     const all = await request(app).get('/api/rescheduling/upcoming');
-    expect(all.body.map((r: { patientName: string }) => r.patientName)).toEqual(['Elisa Prado', 'Carlos Lima', 'Ana Souza', 'Bruno Alves']);
+    expect(all.body.map((r: { patientName: string }) => r.patientName)).toEqual(['Elisa Prado', 'Carlos Lima']);
     expect(all.body[1]).toMatchObject({ leadDays: 32, highRisk: true, confirmation: { status: 'pendente' } });
     expect(all.body[0]).toMatchObject({ highRisk: false, confirmation: null, confirmationRequestDate: null });
 
