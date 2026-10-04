@@ -79,7 +79,7 @@ export function ReschedulingPage() {
                   { label: 'Ordem da fila', value: 'Consulta mais distante; no empate, agendamento mais antigo' },
                   { label: 'Antecipação mínima', value: '24 horas' },
                   { label: 'Prazo de resposta', value: '2 horas; depois, o convite segue para o próximo' },
-                  { label: 'Limite', value: 'Horários a menos de 3 horas não são oferecidos' },
+                  { label: 'Limite', value: 'Não é oferecido a menos de 3 horas; o paciente tem no mínimo 15 minutos para responder' },
                 ]}
                 tiles={[
                   { label: 'Vagas em aberto', value: summary.openVacancies, note: 'esperando resposta' },

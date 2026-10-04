@@ -53,7 +53,11 @@ export function CancelAppointmentDialog({ appointment, onClose, onCancelled }: P
             Clínica cancelou
           </label>
         </fieldset>
-        <p className="mt-3 text-xs text-muted">O horário vira uma vaga e é oferecido a quem está esperando mais longe.</p>
+        <p className="mt-3 text-xs text-muted">
+          {who === 'cancelada_paciente'
+            ? 'O horário vira uma vaga e é oferecido a quem tem a consulta mais distante.'
+            : 'O horário não é oferecido a outros pacientes, porque o médico pode não atender.'}
+        </p>
         {error && (
           <p role="alert" className="mt-2 text-sm text-alert-text">
             {error}
