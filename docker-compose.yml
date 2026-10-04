@@ -27,5 +27,15 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:5173:80"
+
 volumes:
   mongo-data:
