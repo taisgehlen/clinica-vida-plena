@@ -13,6 +13,14 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
   async findById(id: string) {
     return this.items.find((a) => a.id === id) ?? null;
   }
+  async findByIds(ids: string[]) {
+    return this.items.filter((a) => ids.includes(a.id));
+  }
+  async findActiveFrom(from: Date) {
+    return this.items
+      .filter((a) => (a.status === 'agendada' || a.status === 'confirmada') && a.scheduledAt.getTime() >= from.getTime())
+      .sort((x, y) => x.scheduledAt.getTime() - y.scheduledAt.getTime());
+  }
   async findActiveByDoctorAt(doctorId: string, at: Date) {
     return this.items.find((a) => isActive(a) && a.doctorId === doctorId && a.scheduledAt.getTime() === at.getTime()) ?? null;
   }
@@ -28,6 +36,12 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
     const appointment = this.items.find((a) => a.id === id)!;
     appointment.status = status;
     appointment.cancelledAt = cancelledAt;
+    return appointment;
+  }
+  async reschedule(id: string, scheduledAt: Date, status: Appointment['status']) {
+    const appointment = this.items.find((a) => a.id === id)!;
+    appointment.scheduledAt = scheduledAt;
+    appointment.status = status;
     return appointment;
   }
 }

@@ -7,12 +7,20 @@ import { validateTransition, type Status } from './rules/status.js';
 
 const CANCELLED: Status[] = ['cancelada_paciente', 'cancelada_clinica'];
 
+export type CancellationListener = (appointment: Appointment) => Promise<void>;
+
 export class AppointmentService {
+  private readonly cancellationListeners: CancellationListener[] = [];
+
   constructor(
     private readonly appointments: AppointmentRepository,
     private readonly doctors: DoctorRepository,
     private readonly now: () => Date = () => new Date(),
   ) {}
+
+  onCancelled(listener: CancellationListener): void {
+    this.cancellationListeners.push(listener);
+  }
 
   async create(input: CreateAppointmentInput): Promise<Appointment> {
     const doctor = await this.doctors.findById(input.doctorId);
@@ -55,8 +63,12 @@ export class AppointmentService {
     const result = validateTransition(appointment.status, next, appointment.scheduledAt, now);
     if (!result.ok) throw new HttpError(422, result.error, 'invalid_transition');
 
-    // Decision 1: the cancellation time is recorded from now on
-    const cancelledAt = CANCELLED.includes(next) ? now : null;
-    return this.appointments.updateStatus(id, next, cancelledAt);
+    const isCancellation = CANCELLED.includes(next);
+    const updated = await this.appointments.updateStatus(id, next, isCancellation ? now : null);
+
+    if (isCancellation) {
+      for (const listener of this.cancellationListeners) await listener(updated);
+    }
+    return updated;
   }
 }

@@ -3,8 +3,8 @@ import { AppointmentModel } from './appointment.model.js';
 import type { Appointment, AppointmentRepository, NewAppointment } from './appointment.types.js';
 
 const ACTIVE = { $nin: ['cancelada_paciente', 'cancelada_clinica'] };
+const OPEN = { $in: ['agendada', 'confirmada'] };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toAppointment(doc: any): Appointment {
   return {
     id: String(doc._id),
@@ -34,6 +34,17 @@ export class MongoAppointmentRepository implements AppointmentRepository {
     return doc ? toAppointment(doc) : null;
   }
 
+  async findByIds(ids: string[]): Promise<Appointment[]> {
+    const valid = ids.filter((id) => isValidObjectId(id));
+    const docs = await AppointmentModel.find({ _id: { $in: valid } }).lean();
+    return docs.map(toAppointment);
+  }
+
+  async findActiveFrom(from: Date): Promise<Appointment[]> {
+    const docs = await AppointmentModel.find({ scheduledAt: { $gte: from }, status: OPEN }).sort({ scheduledAt: 1 }).lean();
+    return docs.map(toAppointment);
+  }
+
   async findActiveByDoctorAt(doctorId: string, scheduledAt: Date): Promise<Appointment | null> {
     const doc = await AppointmentModel.findOne({ doctorId, scheduledAt, status: ACTIVE }).lean();
     return doc ? toAppointment(doc) : null;
@@ -51,6 +62,12 @@ export class MongoAppointmentRepository implements AppointmentRepository {
 
   async updateStatus(id: string, status: Appointment['status'], cancelledAt: Date | null): Promise<Appointment> {
     const doc = await AppointmentModel.findByIdAndUpdate(id, { status, cancelledAt }, { new: true }).lean();
+    if (!doc) throw new Error(`Appointment ${id} disappeared during update`);
+    return toAppointment(doc);
+  }
+
+  async reschedule(id: string, scheduledAt: Date, status: Appointment['status']): Promise<Appointment> {
+    const doc = await AppointmentModel.findByIdAndUpdate(id, { scheduledAt, status }, { new: true }).lean();
     if (!doc) throw new Error(`Appointment ${id} disappeared during update`);
     return toAppointment(doc);
   }

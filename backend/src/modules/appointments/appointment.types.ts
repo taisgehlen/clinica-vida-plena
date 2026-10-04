@@ -21,8 +21,11 @@ export type NewAppointment = Omit<Appointment, 'id'>;
 export interface AppointmentRepository {
   findAll(): Promise<Appointment[]>;
   findById(id: string): Promise<Appointment | null>;
+  findByIds(ids: string[]): Promise<Appointment[]>;
+  findActiveFrom(from: Date): Promise<Appointment[]>;
   findActiveByDoctorAt(doctorId: string, scheduledAt: Date): Promise<Appointment | null>;
   findActiveByPatientAt(patientId: string, scheduledAt: Date): Promise<Appointment | null>;
   create(data: NewAppointment): Promise<Appointment>;
   updateStatus(id: string, status: Appointment['status'], cancelledAt: Date | null): Promise<Appointment>;
+  reschedule(id: string, scheduledAt: Date, status: Appointment['status']): Promise<Appointment>;
 }

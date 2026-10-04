@@ -25,7 +25,7 @@ export type QueueContext = {
 
 export type SkipReason = 'gain_too_small' | 'no_phone' | 'already_offered' | 'has_open_offer';
 
-export type QueueEntry = { appointment: QueueAppointment; skip: SkipReason | null };
+export type QueueEntry<T extends QueueAppointment = QueueAppointment> = { appointment: T; skip: SkipReason | null };
 
 const ACTIVE: Status[] = ['agendada', 'confirmada'];
 
@@ -41,7 +41,7 @@ function skipReason(appointment: QueueAppointment, vacancy: Vacancy, context: Qu
   return null;
 }
 
-export function buildQueue(vacancy: Vacancy, appointments: QueueAppointment[], context: QueueContext): QueueEntry[] {
+export function buildQueue<T extends QueueAppointment>(vacancy: Vacancy, appointments: T[], context: QueueContext): QueueEntry<T>[] {
   return appointments
     .filter(
       (a) =>
@@ -56,7 +56,7 @@ export function buildQueue(vacancy: Vacancy, appointments: QueueAppointment[], c
     .map((appointment) => ({ appointment, skip: skipReason(appointment, vacancy, context) }));
 }
 
-export function nextInQueue(queue: QueueEntry[]): QueueAppointment | null {
+export function nextInQueue<T extends QueueAppointment>(queue: QueueEntry<T>[]): T | null {
   return queue.find((entry) => entry.skip === null)?.appointment ?? null;
 }
 
