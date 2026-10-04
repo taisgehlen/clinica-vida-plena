@@ -13,13 +13,9 @@ export function indicatorRoutes(
 ): Router {
   const router = Router();
 
-  // GET /api/indicators?from=2026-01-01&to=2026-06-30 (both optional)
   router.get('/', async (req, res) => {
     const query = parseInput(indicatorsQuerySchema, req.query);
     const { from, to } = periodBounds(query);
-    // The whole history is loaded because first visits and reused slots depend on it.
-    // ~7k appointments fit easily in memory; a much larger clinic would need
-    // these numbers pre-aggregated in the database instead.
     const [all, doctorList] = await Promise.all([appointments.findAll(), doctors.findAll()]);
     const period = { from: query.from ?? null, to: query.to ?? null };
     res.json({

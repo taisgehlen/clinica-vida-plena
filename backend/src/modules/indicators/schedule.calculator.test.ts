@@ -13,10 +13,9 @@ const doctors: ScheduleDoctor[] = [
   { id: 'MED02', schedule: [{ dia: 'terca', inicio: '08:00', fim: '09:00' }] },
 ];
 
-// Week used in the tests: Monday 2026-03-02 to Sunday 2026-03-08
 const weekStart = new Date(2026, 2, 2);
 const weekEnd = new Date(2026, 2, 8, 23, 59, 59, 999);
-const later = new Date(2026, 2, 20); // "now", after the whole week
+const later = new Date(2026, 2, 20);
 
 const monday = (h: number, m = 0) => new Date(2026, 2, 2, h, m);
 const tuesday = (h: number, m = 0) => new Date(2026, 2, 3, h, m);
@@ -39,7 +38,6 @@ describe('capacidade da grade', () => {
   });
 
   it('não conta a grade depois de agora (o futuro ainda pode ser agendado)', () => {
-    // now = Monday 09:00 -> MED01 has 08:00, 08:30 and 09:00 behind it; nothing else yet
     const result = run([], monday(9));
     expect(result.capacity).toBe(3);
   });
@@ -79,7 +77,6 @@ describe('horários ocupados', () => {
   });
 
   it('ignora consulta fora da grade do médico', () => {
-    // MED01 does not work on Tuesday
     const result = run([appt({ scheduledAt: tuesday(8) })]);
     expect(result.occupied).toBe(0);
   });

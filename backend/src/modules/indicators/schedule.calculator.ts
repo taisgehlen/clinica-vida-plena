@@ -27,7 +27,6 @@ const round = (value: number) => Math.round(value * 1000) / 1000;
 const ratio = (part: number, whole: number) => (whole === 0 ? null : round(part / whole));
 const keyOf = (doctorId: string, at: Date) => `${doctorId}|${at.getTime()}`;
 
-// Every slot start of one doctor between start and end (inclusive)
 function gridSlots(doctor: ScheduleDoctor, start: Date, end: Date): Date[] {
   const slots: Date[] = [];
   const day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -65,7 +64,6 @@ export function computeSchedule(
   const start = from ?? firstAppointment;
   const end = to && to < now ? to : now;
 
-  // Slots that have at least one non-cancelled appointment
   const activeKeys = new Set(all.filter((a) => !CANCELLED.includes(a.status)).map((a) => keyOf(a.doctorId, a.scheduledAt)));
 
   const byDoctor = doctors.map((doctor) => {

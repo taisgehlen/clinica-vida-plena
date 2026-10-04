@@ -1,5 +1,3 @@
-// In-memory versions of the repositories, used only by tests.
-// They behave like the MongoDB ones, but keep the data in an array.
 import type { Appointment, AppointmentRepository, NewAppointment } from '../modules/appointments/appointment.types.js';
 import type { Doctor, DoctorRepository } from '../modules/doctors/doctor.types.js';
 
@@ -44,7 +42,6 @@ export class InMemoryDoctorRepository implements DoctorRepository {
   }
 }
 
-// Dr. Paulo: Monday and Wednesday 07:00-12:00
 export const drPaulo: Doctor = {
   id: 'MED01',
   name: 'Dr. Paulo Mendes',

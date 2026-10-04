@@ -4,7 +4,6 @@ import type { Appointment, AppointmentRepository, NewAppointment } from './appoi
 
 const ACTIVE = { $nin: ['cancelada_paciente', 'cancelada_clinica'] };
 
-// Converts what MongoDB returns into the plain Appointment type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toAppointment(doc: any): Appointment {
   return {
@@ -30,8 +29,6 @@ export class MongoAppointmentRepository implements AppointmentRepository {
   }
 
   async findById(id: string): Promise<Appointment | null> {
-    // An id that is not a valid ObjectId can never exist; checking first also
-    // avoids passing arbitrary input to the database
     if (!isValidObjectId(id)) return null;
     const doc = await AppointmentModel.findById(id).lean();
     return doc ? toAppointment(doc) : null;
