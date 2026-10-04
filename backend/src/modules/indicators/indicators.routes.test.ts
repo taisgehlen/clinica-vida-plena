@@ -6,6 +6,7 @@ import { InMemoryAppointmentRepository, InMemoryDoctorRepository, drPaulo } from
 const app = createApp({
   appointments: new InMemoryAppointmentRepository(),
   doctors: new InMemoryDoctorRepository([drPaulo]),
+  now: () => new Date(2026, 9, 1), // fixed clock: the tests do not change with the real date
 });
 
 describe('GET /api/indicators', () => {
@@ -14,6 +15,14 @@ describe('GET /api/indicators', () => {
     expect(res.status).toBe(200);
     expect(res.body.period).toEqual({ from: null, to: null });
     expect(res.body.byDoctor).toHaveLength(1);
+  });
+
+  it('inclui a ocupação da agenda na resposta', async () => {
+    const res = await request(app).get('/api/indicators?from=2026-03-02&to=2026-03-08');
+    expect(res.status).toBe(200);
+    // Dr. Paulo works Monday and Wednesday 07:00-12:00: 10 slots per day, 2 days
+    expect(res.body.schedule).toMatchObject({ capacity: 20, occupied: 0, free: 20 });
+    expect(res.body.schedule.byDoctor[0]).toMatchObject({ doctorId: 'MED01', capacity: 20 });
   });
 
   it('aceita período válido', async () => {

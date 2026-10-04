@@ -10,20 +10,17 @@ import { doctorRoutes } from './modules/doctors/doctor.routes.js';
 import { indicatorRoutes } from './modules/indicators/indicators.routes.js';
 import type { DoctorRepository } from './modules/doctors/doctor.types.js';
 
-// What the app needs from the outside. server.ts passes the MongoDB versions;
-// tests pass in-memory versions and a fixed clock.
 export type AppDependencies = {
   appointments: AppointmentRepository;
   doctors: DoctorRepository;
   now?: () => Date;
 };
 
-// Builds the Express app without starting it, so tests can use it directly
 export function createApp(deps: AppDependencies) {
   const app = express();
-  app.use(helmet()); // security HTTP headers
-  app.use(cors({ origin: env.corsOrigin })); // only the frontend's address
-  app.use(express.json({ limit: '100kb' })); // rejects oversized bodies
+  app.use(helmet());
+  app.use(cors({ origin: env.corsOrigin })); 
+  app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
@@ -32,8 +29,7 @@ export function createApp(deps: AppDependencies) {
   const appointmentService = new AppointmentService(deps.appointments, deps.doctors, deps.now);
   app.use('/api/appointments', appointmentRoutes(appointmentService));
   app.use('/api/doctors', doctorRoutes(deps.doctors));
-  app.use('/api/indicators', indicatorRoutes(deps.appointments, deps.doctors));
-
+app.use('/api/indicators', indicatorRoutes(deps.appointments, deps.doctors, deps.now));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
