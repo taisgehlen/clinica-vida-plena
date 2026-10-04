@@ -153,11 +153,17 @@ describe('vaga e oferta', () => {
     expect(messagesOf('0003')).toHaveLength(0);
   });
 
-  it('quando a recepção cancela, a vaga também abre', async () => {
-    const res = await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_clinica' });
+  it('quando a recepção registra o cancelamento do paciente, a vaga também abre', async () => {
+    const res = await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_paciente' });
     expect(res.status).toBe(200);
     expect(vacancies.items).toHaveLength(1);
     expect(lastMessage('0002').kind).toBe('offer');
+  });
+
+  it('quando a clínica cancela, a vaga não abre', async () => {
+    const res = await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_clinica' });
+    expect(res.status).toBe(200);
+    expect(vacancies.items).toHaveLength(0);
   });
 
   it('o resumo conta quem avisou que não vem, as antecipações e os dias ganhos', async () => {
@@ -225,14 +231,14 @@ describe('vaga e oferta', () => {
 
   it('não oferece vaga a menos de 3 horas do horário', async () => {
     clock = at('2026-10-03T08:00:00');
-    await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_clinica' });
+    await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_paciente' });
     expect(vacancies.items[0]?.status).toBe('em_cima_da_hora');
     expect(offers.items).toHaveLength(0);
   });
 
   it('não oferece a quem não tem telefone e mostra o motivo na fila', async () => {
     find('0002').patientPhone = null;
-    await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_clinica' });
+    await request(app).patch('/api/appointments/0001/status').send({ status: 'cancelada_paciente' });
     expect(lastMessage('0003').kind).toBe('offer');
     const overview = await request(app).get('/api/rescheduling/overview');
     expect(overview.body.vacancies[0].queue.map((q: { skip: string | null }) => q.skip)).toEqual(['no_phone', 'already_offered']);

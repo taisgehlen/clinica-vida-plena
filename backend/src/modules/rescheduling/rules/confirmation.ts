@@ -20,6 +20,7 @@ export type PendingConfirmation = {
   scheduledAt: Date;
   sentAt: Date;
   reminderSentAt: Date | null;
+  awaitingCancelAnswer?: boolean;
 };
 
 export type ConfirmationStep = 'wait' | 'send_reminder' | 'mark_no_answer';
@@ -53,6 +54,7 @@ export function needsConfirmation(appointment: ConfirmationCandidate, now: Date)
 export function nextConfirmationStep(confirmation: PendingConfirmation, now: Date): ConfirmationStep {
   const untilAppointment = confirmation.scheduledAt.getTime() - now.getTime();
   if (untilAppointment <= CALL_HOURS_BEFORE * HOUR) return 'mark_no_answer';
+  if (confirmation.awaitingCancelAnswer) return 'wait';
 
   const reminderDue = untilAppointment <= REMINDER_HOURS_BEFORE * HOUR;
   const enoughTimeSinceFirst = now.getTime() - confirmation.sentAt.getTime() >= MIN_HOURS_BETWEEN_MESSAGES * HOUR;

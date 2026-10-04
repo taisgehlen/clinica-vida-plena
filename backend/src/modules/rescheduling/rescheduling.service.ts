@@ -17,7 +17,7 @@ import type {
   VacancyRepository,
 } from './rescheduling.types.js';
 import { needsConfirmation, nextConfirmationStep } from './rules/confirmation.js';
-import { buildQueue, canOffer, nextInQueue, offerExpiresAt } from './rules/queue.js';
+import { buildQueue, canOffer, offerExpiresAt } from './rules/queue.js';
 import { createToken, hashToken } from './token.js';
 
 export type ReschedulingDependencies = {
@@ -137,13 +137,21 @@ export class ReschedulingService {
   private async advanceConfirmations(): Promise<void> {
     const now = this.now;
     for (const confirmation of await this.deps.confirmations.findPending()) {
-      if (confirmation.awaitingCancelAnswer) continue;
+      const appointment = await this.deps.appointments.findById(confirmation.appointmentId);
+      if (!appointment || appointment.status !== 'agendada') {
+        if (appointment?.status === 'confirmada') {
+          await this.deps.confirmations.update(
+            confirmation.id,
+            { status: 'confirmada', awaitingCancelAnswer: false, answeredAt: now },
+            { at: now, type: 'confirmed_by_phone' },
+          );
+        }
+        continue;
+      }
       const step = nextConfirmationStep(confirmation, now);
       if (step === 'mark_no_answer') {
         await this.deps.confirmations.update(confirmation.id, { status: 'sem_resposta' }, { at: now, type: 'no_answer' });
       } else if (step === 'send_reminder') {
-        const appointment = await this.deps.appointments.findById(confirmation.appointmentId);
-        if (!appointment) continue;
         await this.deps.confirmations.update(confirmation.id, { reminderSentAt: now }, { at: now, type: 'reminder_sent' });
         const doctor = await this.doctor(appointment.doctorId);
         const history = await this.deps.outbox.findByPatient(appointment.patientId);
@@ -188,6 +196,7 @@ export class ReschedulingService {
     for (const offer of (await this.deps.offers.findPending()).filter((o) => o.appointmentId === appointment.id)) {
       if (await this.deps.offers.closeIfPending(offer.id, 'cancelada', now)) await this.reopen(offer.vacancyId);
     }
+    if (appointment.status !== 'cancelada_paciente') return;
     await this.openVacancy(appointment.doctorId, appointment.scheduledAt, {
       kind: 'cancelamento',
       appointmentId: appointment.id,
@@ -232,7 +241,12 @@ export class ReschedulingService {
       await this.deps.vacancies.changeStatus(vacancy.id, ['aberta'], 'em_cima_da_hora');
       return;
     }
-    const next = nextInQueue(await this.queueFor(vacancy));
+    const doctorBusy = await this.deps.appointments.findActiveByDoctorAt(vacancy.doctorId, vacancy.scheduledAt);
+    if (doctorBusy) {
+      await this.deps.vacancies.changeStatus(vacancy.id, ['aberta'], 'preenchida', doctorBusy.id);
+      return;
+    }
+    const next = await this.firstAvailable(vacancy);
     if (!next) {
       await this.deps.vacancies.changeStatus(vacancy.id, ['aberta'], 'sem_fila');
       return;
@@ -263,6 +277,15 @@ export class ReschedulingService {
     );
   }
 
+  private async firstAvailable(vacancy: Vacancy): Promise<Appointment | null> {
+    for (const entry of await this.queueFor(vacancy)) {
+      if (entry.skip) continue;
+      const busy = await this.deps.appointments.findActiveByPatientAt(entry.appointment.patientId, vacancy.scheduledAt);
+      if (!busy) return entry.appointment;
+    }
+    return null;
+  }
+
   async answerConfirmation(token: string, answer: ConfirmationAnswer): Promise<Confirmation> {
     const now = this.now;
     const confirmation = await this.deps.confirmations.findByTokenHash(hashToken(token));
@@ -276,6 +299,9 @@ export class ReschedulingService {
     }
     const appointment = await this.deps.appointments.findById(confirmation.appointmentId);
     if (!appointment) throw new HttpError(404, 'Consulta não encontrada', 'appointment_not_found');
+    if (appointment.scheduledAt.getTime() <= now.getTime()) {
+      throw new HttpError(410, 'O horário desta consulta já passou', 'appointment_started');
+    }
     const doctor = await this.doctor(appointment.doctorId);
 
     const labels: Record<ConfirmationAnswer, string> = {
@@ -382,7 +408,13 @@ export class ReschedulingService {
       this.deps.appointments.findActiveByDoctorAt(vacancy.doctorId, vacancy.scheduledAt),
       this.deps.appointments.findActiveByPatientAt(appointment.patientId, vacancy.scheduledAt),
     ]);
-    if (doctorBusy || patientBusy) throw new HttpError(409, 'Este horário não está mais disponível', 'slot_taken');
+    if (doctorBusy || patientBusy) {
+      if (await this.deps.offers.closeIfPending(offer.id, 'cancelada', now)) {
+        if (doctorBusy) await this.deps.vacancies.changeStatus(vacancy.id, ['oferecida'], 'preenchida', doctorBusy.id);
+        else await this.reopen(vacancy.id);
+      }
+      throw new HttpError(409, 'Este horário não está mais disponível', 'slot_taken');
+    }
 
     const accepted = await this.deps.offers.closeIfPending(offer.id, 'aceita', now);
     if (!accepted) throw new HttpError(409, 'Esta oferta já foi respondida', 'offer_closed');

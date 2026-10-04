@@ -2,6 +2,7 @@ import type { Status } from '../../appointments/rules/status.js';
 
 export const MIN_GAIN_HOURS = 24;
 export const MIN_NOTICE_HOURS = 3;
+export const MIN_RESPONSE_MINUTES = 15;
 export const DEFAULT_OFFER_TTL_MINUTES = 120;
 
 const HOUR = 60 * 60 * 1000;
@@ -61,7 +62,7 @@ export function nextInQueue<T extends QueueAppointment>(queue: QueueEntry<T>[]):
 }
 
 export function canOffer(vacancyAt: Date, now: Date): boolean {
-  return vacancyAt.getTime() - now.getTime() >= MIN_NOTICE_HOURS * HOUR;
+  return vacancyAt.getTime() - now.getTime() >= MIN_NOTICE_HOURS * HOUR + MIN_RESPONSE_MINUTES * 60 * 1000;
 }
 
 export function offerExpiresAt(now: Date, vacancyAt: Date, ttlMinutes: number): Date {

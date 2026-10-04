@@ -61,9 +61,9 @@ describe('buildQueue', () => {
 });
 
 describe('canOffer', () => {
-  it('só oferece vaga com pelo menos 3 horas de antecedência', () => {
-    expect(canOffer(vacancy.scheduledAt, new Date(2026, 9, 6, 11, 0))).toBe(true);
-    expect(canOffer(vacancy.scheduledAt, new Date(2026, 9, 6, 11, 1))).toBe(false);
+  it('só oferece vaga com 3 horas de antecedência e mais 15 minutos para o paciente responder', () => {
+    expect(canOffer(vacancy.scheduledAt, new Date(2026, 9, 6, 10, 45))).toBe(true);
+    expect(canOffer(vacancy.scheduledAt, new Date(2026, 9, 6, 10, 46))).toBe(false);
   });
 });
 

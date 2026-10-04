@@ -84,6 +84,12 @@ describe('nextConfirmationStep', () => {
     expect(nextConfirmationStep({ scheduledAt: consulta, sentAt: lateSentAt, reminderSentAt: null }, new Date(2026, 9, 7, 17, 0))).toBe('wait');
   });
 
+  it('quem disse que não pode ir não recebe lembrete, mas entra na lista de ligar', () => {
+    const waiting = { scheduledAt: consulta, sentAt, reminderSentAt: null, awaitingCancelAnswer: true };
+    expect(nextConfirmationStep(waiting, new Date(2026, 9, 7, 14, 0))).toBe('wait');
+    expect(nextConfirmationStep(waiting, new Date(2026, 9, 8, 2, 0))).toBe('mark_no_answer');
+  });
+
   it('marca sem resposta quando faltam 12 horas', () => {
     const reminderSentAt = new Date(2026, 9, 7, 14, 0);
     expect(nextConfirmationStep({ scheduledAt: consulta, sentAt, reminderSentAt }, new Date(2026, 9, 8, 2, 0))).toBe('mark_no_answer');
