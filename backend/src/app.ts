@@ -52,7 +52,7 @@ export function createServices(deps: AppDependencies): Services {
   };
   const rescheduling = new ReschedulingService(reschedulingDeps);
   appointmentService.onCancelled((appointment) => rescheduling.handleCancellation(appointment));
-  return { appointmentService, rescheduling, views: new ReschedulingViews(reschedulingDeps, rescheduling) };
+  return { appointmentService, rescheduling, views: new ReschedulingViews(reschedulingDeps) };
 }
 
 export function createApp(deps: AppDependencies, services: Services = createServices(deps)) {

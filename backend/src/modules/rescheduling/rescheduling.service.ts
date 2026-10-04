@@ -259,7 +259,7 @@ export class ReschedulingService {
       appointment,
       'offer',
       messages.offerMessage(appointment.patientName, doctor, vacancy.scheduledAt, appointment.scheduledAt, expiresAt),
-      { offerId: offer.id, link: `${this.deps.publicUrl}/oferta/${token}` },
+      { offerId: offer.id, link: `${this.deps.publicUrl}/antecipar/${token}` },
     );
   }
 

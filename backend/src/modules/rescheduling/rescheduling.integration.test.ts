@@ -147,7 +147,7 @@ describe('fluxo completo com MongoDB', () => {
     expect((await AppointmentModel.findById(carlos._id).lean())?.status).toBe('cancelada_paciente');
 
     const offerMessage = await MessageModel.findOne({ patientId: 'PAC0002', kind: 'offer' }).lean();
-    const offerToken = offerMessage!.link!.split('/oferta/')[1]!;
+    const offerToken = offerMessage!.link!.split('/antecipar/')[1]!;
     clock = at('2026-10-01T12:30:00');
     const results = await Promise.all([
       request(app).post(`/api/patient/offers/${offerToken}/accept`),

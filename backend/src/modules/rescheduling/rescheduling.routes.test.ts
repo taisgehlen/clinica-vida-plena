@@ -45,7 +45,7 @@ const find = (id: string) => appointments.items.find((a) => a.id === id)!;
 const messagesOf = (id: string) => outbox.items.filter((m) => m.patientId === `PAC${id}`);
 const lastMessage = (id: string) => messagesOf(id).at(-1)!;
 const replyToken = (id: string) => messagesOf(id).filter((m) => m.replyToken).at(-1)!.replyToken!;
-const offerToken = (id: string) => messagesOf(id).filter((m) => m.link).at(-1)!.link!.split('/oferta/')[1]!;
+const offerToken = (id: string) => messagesOf(id).filter((m) => m.link).at(-1)!.link!.split('/antecipar/')[1]!;
 const answer = (token: string, value: string) => request(app).post(`/api/patient/confirmations/${token}`).send({ answer: value });
 const tick = () => services.rescheduling!.tick();
 
@@ -149,7 +149,7 @@ describe('vaga e oferta', () => {
     expect(find('0001').status).toBe('cancelada_paciente');
     expect(vacancies.items[0]).toMatchObject({ status: 'oferecida', origin: { kind: 'cancelamento', patientName: 'Carlos Lima' } });
     expect(lastMessage('0002').kind).toBe('offer');
-    expect(lastMessage('0002').link).toMatch(/^http:\/\/localhost:5173\/oferta\/[A-Za-z0-9_-]{43}$/);
+    expect(lastMessage('0002').link).toMatch(/^http:\/\/localhost:5173\/antecipar\/[A-Za-z0-9_-]{43}$/);
     expect(messagesOf('0003')).toHaveLength(0);
   });
 
@@ -158,6 +158,13 @@ describe('vaga e oferta', () => {
     expect(res.status).toBe(200);
     expect(vacancies.items).toHaveLength(1);
     expect(lastMessage('0002').kind).toBe('offer');
+  });
+
+  it('o resumo conta quem avisou que não vem, as antecipações e os dias ganhos', async () => {
+    await patientCancels();
+    await request(app).post(`/api/patient/offers/${offerToken('0002')}/accept`);
+    const res = await request(app).get('/api/rescheduling/overview');
+    expect(res.body.summary).toMatchObject({ declined: 1, anticipatedThisMonth: 1, daysGainedThisMonth: 47, openVacancies: 0 });
   });
 
   it('ao aceitar, a consulta é antecipada e o horário antigo vira uma nova vaga', async () => {

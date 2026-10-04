@@ -11,9 +11,9 @@ import type {
   VacancyOrigin,
   VacancyStatus,
 } from './rescheduling.types.js';
-import type { ReschedulingDependencies, ReschedulingService } from './rescheduling.service.js';
+import type { ReschedulingDependencies } from './rescheduling.service.js';
 import { confirmationSendDate, isHighRisk, leadTimeDays } from './rules/confirmation.js';
-import type { SkipReason } from './rules/queue.js';
+import { buildQueue, type SkipReason } from './rules/queue.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const CONTACT_HISTORY_DAYS = 7;
@@ -44,7 +44,15 @@ export type VacancyView = {
 };
 
 export type OverviewView = {
-  summary: { awaitingConfirmation: number; noAnswer: number; confirmed: number; openVacancies: number; anticipatedThisMonth: number };
+  summary: {
+    awaitingConfirmation: number;
+    noAnswer: number;
+    confirmed: number;
+    declined: number;
+    openVacancies: number;
+    anticipatedThisMonth: number;
+    daysGainedThisMonth: number;
+  };
   vacancies: VacancyView[];
   contacts: ContactView[];
 };
@@ -100,10 +108,7 @@ function offerTimeline(offer: Offer): ContactView['timeline'] {
 const lastAt = (timeline: ContactView['timeline']) => Math.max(...timeline.map((e) => e.at.getTime()));
 
 export class ReschedulingViews {
-  constructor(
-    private readonly deps: ReschedulingDependencies,
-    private readonly service: ReschedulingService,
-  ) {}
+  constructor(private readonly deps: ReschedulingDependencies) {}
 
   private async doctorNames(): Promise<Map<string, Doctor>> {
     return new Map((await this.deps.doctors.findAll()).map((d) => [d.id, d]));
@@ -129,9 +134,15 @@ export class ReschedulingViews {
     const appointments = new Map((await this.deps.appointments.findByIds([...appointmentIds])).map((a) => [a.id, a]));
     const doctorName = (id: string) => doctors.get(id)?.name ?? id;
 
+    const [activeAppointments, pendingOffers] = await Promise.all([this.deps.appointments.findActiveFrom(now), this.deps.offers.findPending()]);
+    const patientsWithOpenOffer = new Set(pendingOffers.map((o) => o.patientId));
     const vacancyViews: VacancyView[] = [];
     for (const vacancy of [...vacancies].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())) {
-      const queue = await this.service.queueFor(vacancy);
+      const offersOfVacancy = await this.deps.offers.findByVacancy(vacancy.id);
+      const queue = buildQueue(vacancy, activeAppointments, {
+        alreadyOffered: new Set(offersOfVacancy.map((o) => o.appointmentId)),
+        patientsWithOpenOffer,
+      });
       const pending = offers.find((o) => o.vacancyId === vacancy.id && o.status === 'pendente');
       vacancyViews.push({
         id: vacancy.id,
@@ -191,14 +202,22 @@ export class ReschedulingViews {
 
     const rank = (c: ContactView) => (c.current.status === 'sem_resposta' ? 2 : c.needsAttention ? 1 : 0);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const acceptedThisMonth = accepted.filter((o) => (o.answeredAt ?? o.sentAt).getTime() >= monthStart.getTime());
+    let daysGained = 0;
+    for (const offer of acceptedThisMonth) {
+      const vacancy = await this.deps.vacancies.findById(offer.vacancyId);
+      if (vacancy) daysGained += Math.max(0, Math.round((offer.previousScheduledAt.getTime() - vacancy.scheduledAt.getTime()) / DAY));
+    }
 
     return {
       summary: {
         awaitingConfirmation: pendingConfirmations.length,
         noAnswer: confirmations.filter((c) => c.status === 'sem_resposta').length,
         confirmed: confirmations.filter((c) => c.status === 'confirmada').length,
-        openVacancies: vacancies.filter((v) => v.status !== 'preenchida').length,
-        anticipatedThisMonth: accepted.filter((o) => (o.answeredAt ?? o.sentAt).getTime() >= monthStart.getTime()).length,
+        declined: confirmations.filter((c) => c.status === 'cancelou').length,
+        openVacancies: vacancies.filter((v) => v.status === 'aberta' || v.status === 'oferecida' || v.status === 'em_cima_da_hora').length,
+        anticipatedThisMonth: acceptedThisMonth.length,
+        daysGainedThisMonth: daysGained,
       },
       vacancies: vacancyViews,
       contacts: [...contacts.values()].sort((a, b) => rank(b) - rank(a) || lastAt(b.timeline) - lastAt(a.timeline)),
