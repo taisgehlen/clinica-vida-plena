@@ -64,13 +64,13 @@ describe('parseDateTime', () => {
   it('lê o formato ISO sem inverter dia e mês', () => {
     const parsed = parseDateTime('2025-10-02 15:00');
     expect(parsed?.format).toBe('iso');
-    expect(parsed?.date).toEqual(new Date(2025, 9, 2, 15, 0)); // 2 de outubro
+    expect(parsed?.date).toEqual(new Date(2025, 9, 2, 15, 0));
   });
 
   it('lê o formato brasileiro (dia/mês/ano)', () => {
     const parsed = parseDateTime('02/10/2025 15:00');
     expect(parsed?.format).toBe('br');
-    expect(parsed?.date).toEqual(new Date(2025, 9, 2, 15, 0)); // 2 de outubro
+    expect(parsed?.date).toEqual(new Date(2025, 9, 2, 15, 0));
   });
 
   it('os dois formatos da mesma data dão o mesmo resultado', () => {
@@ -94,7 +94,7 @@ describe('normalizePhone', () => {
     ['(53) 96470-3160', '53964703160'],
     ['54912341342', '54912341342'],
     ['+55 53 998575311', '53998575311'],
-    ['5332221100', '5332221100'], // fixo com DDD (10 dígitos)
+    ['5332221100', '5332221100'],
   ])('normaliza "%s" para %s', (raw, expected) => {
     expect(normalizePhone(raw)).toBe(expected);
   });

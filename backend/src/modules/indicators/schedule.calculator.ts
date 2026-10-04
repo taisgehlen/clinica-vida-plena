@@ -43,11 +43,6 @@ function gridSlots(doctor: ScheduleDoctor, start: Date, end: Date): Date[] {
   return slots;
 }
 
-/**
- * @param all       every appointment (the whole history decides if a cancelled slot was filled)
- * @param from, to  same period filter as the other indicators, or null for no limit
- * @param now       current time; the grid after it is not counted
- */
 export function computeSchedule(
   all: ScheduleAppointment[],
   doctors: ScheduleDoctor[],

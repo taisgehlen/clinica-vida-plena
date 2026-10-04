@@ -1,8 +1,6 @@
 import type { ZodType } from 'zod';
 import { HttpError } from './http-error.js';
 
-// Validates any external input (body, query string) with a Zod schema.
-// Invalid input becomes a 400 that lists every problem found.
 export function parseInput<T>(schema: ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) {

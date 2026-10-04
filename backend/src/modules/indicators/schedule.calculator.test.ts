@@ -44,11 +44,11 @@ describe('capacidade da grade', () => {
 
   it('sem data inicial, começa no dia da primeira consulta registrada', () => {
     const result = run([appt({ scheduledAt: tuesday(8) })], later, null, weekEnd);
-    expect(result.capacity).toBe(2 + 2); // Tuesday (MED02) + Wednesday (MED01)
+    expect(result.capacity).toBe(2 + 2);
   });
 
   it('devolve taxa nula quando não há grade no período', () => {
-    const result = run([], monday(7)); // before the first slot of the week
+    const result = run([], monday(7));
     expect(result.capacity).toBe(0);
     expect(result.occupancyRate).toBeNull();
   });
@@ -63,7 +63,7 @@ describe('horários ocupados', () => {
     ]);
     expect(result.occupied).toBe(3);
     expect(result.free).toBe(5);
-    expect(result.occupancyRate).toBe(0.375); // 3 of 8
+    expect(result.occupancyRate).toBe(0.375);
   });
 
   it('não conta consulta cancelada como ocupação', () => {
@@ -94,8 +94,8 @@ describe('cancelamentos preenchidos', () => {
   it('é preenchido quando outro paciente ficou com o mesmo médico e horário', () => {
     const result = run([
       appt({ scheduledAt: monday(8), status: 'cancelada_paciente' }),
-      appt({ scheduledAt: monday(8), status: 'realizada' }), // took the freed slot
-      appt({ scheduledAt: monday(9), status: 'cancelada_clinica' }), // nobody took it
+      appt({ scheduledAt: monday(8), status: 'realizada' }),
+      appt({ scheduledAt: monday(9), status: 'cancelada_clinica' }),
     ]);
     expect(result.cancellations).toEqual({ total: 2, filled: 1, unfilled: 1 });
   });

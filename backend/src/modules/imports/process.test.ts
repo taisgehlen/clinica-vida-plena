@@ -29,7 +29,7 @@ function row(overrides: Partial<RawAppointmentRow> = {}): RawAppointmentRow {
     tipo_atendimento: 'convenio',
     medico_id: 'MED01',
     data_agendamento: '2026-09-01 10:00',
-    data_consulta: '2026-09-14 08:00', // Monday, inside the grid, in the past
+    data_consulta: '2026-09-14 08:00',
     status: 'realizada',
     ...overrides,
   };
@@ -145,7 +145,7 @@ describe('processAppointments', () => {
     });
 
     it('marca consulta fora da grade do médico', () => {
-      const { appointments } = run([row({ data_consulta: '2026-09-15 08:00' })]); // terça
+      const { appointments } = run([row({ data_consulta: '2026-09-15 08:00' })]);
       expect(appointments[0]!.flags).toContain('fora_da_grade');
     });
 

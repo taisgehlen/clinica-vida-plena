@@ -80,11 +80,6 @@ function leadTimeDays(a: IndicatorAppointment): number {
   return Math.round((scheduled.getTime() - booked.getTime()) / DAY_MS);
 }
 
-/**
- * @param all       every appointment in the database (needed to know first visits and reused slots)
- * @param doctors   doctors, for names in the per-doctor list
- * @param from, to  period filter on the appointment date (inclusive), or null for no limit
- */
 export function computeIndicators(
   all: IndicatorAppointment[],
   doctors: IndicatorDoctor[],
@@ -92,7 +87,6 @@ export function computeIndicators(
   to: Date | null,
   period: { from: string | null; to: string | null } = { from: null, to: null },
 ): Indicators {
-  // Facts that depend on the whole history, not only on the period
   const firstVisit = new Map<string, number>();
   const activeSlots = new Set<string>();
   for (const a of all) {
@@ -135,7 +129,6 @@ export function computeIndicators(
     .sort((x, y) => x.dayIndex - y.dayIndex || x.shift.localeCompare(y.shift))
     .map(({ dayIndex: _dayIndex, ...rest }) => rest);
 
-  // First visit at the clinic vs returning patient
   const isFirst = (a: IndicatorAppointment) => firstVisit.get(a.patientId) === a.scheduledAt.getTime();
   const byFirstVisit = [
     { group: 'primeira_consulta' as const, ...rateOf(inPeriod.filter(isFirst)) },

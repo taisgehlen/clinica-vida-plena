@@ -25,8 +25,6 @@ describe('app', () => {
     const allowed = await request(app).get('/api/health').set('Origin', 'http://localhost:5173');
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
 
-    // The browser only accepts the response if this header equals the calling site's address,
-    // so a request from another site is blocked by the browser itself
     const other = await request(app).get('/api/health').set('Origin', 'http://site-estranho.com');
     expect(other.headers['access-control-allow-origin']).not.toBe('http://site-estranho.com');
     expect(other.headers['access-control-allow-origin']).not.toBe('*');

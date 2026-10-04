@@ -175,7 +175,6 @@ export function processAppointments(
 
     const flags: AppointmentFlag[] = [];
     if (status.assumedPatientCancellation) flags.push('cancelamento_assumido_paciente');
-    // The grid rule applies to new bookings; historical rows are kept and flagged
     if (!validateSlot(doctor.grade, scheduled.date).ok) flags.push('fora_da_grade');
     if (OPEN.includes(status.status) && scheduled.date < referenceDate) flags.push('pendente_de_fechamento');
 

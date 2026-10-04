@@ -54,8 +54,8 @@ export function normalizeServiceType(raw: string | undefined): ServiceType | nul
   return null;
 }
 
-const ISO = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/; // 2025-10-02 15:00
-const BR = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/; // 02/10/2025 15:00
+const ISO = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/;
+const BR = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
 
 export type ParsedDate = { date: Date; format: 'iso' | 'br' };
 

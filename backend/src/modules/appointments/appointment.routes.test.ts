@@ -7,10 +7,8 @@ import {
   drPaulo,
 } from '../../testing/in-memory-repositories.js';
 
-// Fixed clock: Thursday 2026-10-01 12:00 (São Paulo)
 const NOW = new Date('2026-10-01T12:00:00-03:00');
 
-// Monday 2026-10-05 08:00 (inside Dr. Paulo's schedule, in the future)
 const valid = {
   patientId: 'PAC0001',
   patientName: 'Maria Silva',
@@ -87,7 +85,7 @@ describe('POST /api/appointments', () => {
   });
 
   it('rejeita horário fora da grade do médico', async () => {
-    const res = await createBooking({ ...valid, scheduledAt: '2026-10-06T08:00:00-03:00' }); // terça
+    const res = await createBooking({ ...valid, scheduledAt: '2026-10-06T08:00:00-03:00' });
     expect(res.status).toBe(422);
     expect(res.body.error).toEqual({ code: 'invalid_slot', message: 'O médico não atende neste dia da semana' });
   });
